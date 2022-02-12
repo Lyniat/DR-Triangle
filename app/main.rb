@@ -65,8 +65,6 @@ def draw args
   @v2_x,@v2_y,@v2_z = rotate(@v2_x,@v2_y,@v2_z,theta)
 
   cols = [{r: 1, b: 0, g: 0}, {r: 0, b: 1, g: 0}, {r: 0, b: 0, g: 1}]
-  # Vec3f *framebuffer = new Vec3f[width * height]
-  # Vec3f *pix = framebuffer;
   fov = 90
   scale = Math.tan(deg2rad(fov * 0.5))
   imageAspectRatio = @width / @height
@@ -83,7 +81,6 @@ def draw args
     while i < @width
       x = (2 * (i + 0.5) / @width - 1) * imageAspectRatio * scale
       y = (1 - 2 * (j + 0.5) / @height) * scale
-      # Vec3.new(x, y, -1)
       @dir_x, @dir_y, @dir_z = normalize(x, y, -1)
 
       intersects,t,u,v = rayTriangleIntersect(t,u,v)
@@ -199,8 +196,4 @@ def rayTriangleIntersect(t, u, v)
   v /= denom
 
   return [true, t , u, v] # this ray hits the triangle
-end
-
-def rotation_position args
-
 end
