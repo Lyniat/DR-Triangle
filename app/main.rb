@@ -14,7 +14,7 @@
 #
 # see: https://www.scratchapixel.com/code.php?id=9&origin=/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle&src=0
 
-# require 'app/geometry.rb'
+require 'app/logo.rb'
 
 def deg2rad(deg)
   deg * 3.14 / 180 # TODO: pi genauer
@@ -30,10 +30,10 @@ def tick args
   @v1_z = 0
   @v2_z = 0
 
-  @v0_x = -3
-  @v0_y = -3
-  @v1_x = 3
-  @v1_y = -3
+  @v0_x = -6
+  @v0_y = -6
+  @v1_x = 6
+  @v1_y = -6
   @v2_x = 0
   @v2_y = 3
   draw args
@@ -70,7 +70,7 @@ def draw args
   imageAspectRatio = @width / @height
   pix = 0
   @orig_x = 0
-  @orig_y = 0
+  @orig_y = -3
   @orig_z = 5
   t = 0
   u = 0
@@ -88,7 +88,19 @@ def draw args
         red = u * cols[0].r + v * cols[1].r + (1 - u - v) * cols[2].r
         green = u * cols[0].g + v * cols[1].g + (1 - u - v) * cols[2].g
         blue = u * cols[0].b + v * cols[1].b + (1 - u - v) * cols[2].b
-        @framebuffer[pix] = 0xFF000000 + ((red*255).to_i << 16) + ((green*255).to_i << 8) + (blue*255).to_i
+        red *= 2
+        red = 1 - red
+        green *= 2
+        green = 1 - green
+        red += green / 2
+        red = red.clamp(0,0.99999)
+        green = green.clamp(0,0.99999)
+        xx = (red * LOGO_WIDTH).to_i
+        yy = (green * LOGO_HEIGHT).to_i
+        _col = (LOGO[xx + yy * LOGO_WIDTH]) >> 6
+        _col = (_col > 0 && _col < 255) ? 0xFF0000FF : 0x00FFFFFF
+        #logo_color = LOGO
+        @framebuffer[pix] = _col #0xFF000000 + ((red*255).to_i << 16) + ((green*255).to_i << 8) + (blue*255).to_i
       end
 
       pix += 1
