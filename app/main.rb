@@ -72,6 +72,9 @@ def draw args
   @orig_x = 0
   @orig_y = -3
   @orig_z = 5
+  @light_x = 0
+  @light_y = 1
+  @light_z = 1
   t = 0
   u = 0
   v = 0
@@ -83,11 +86,14 @@ def draw args
       y = (1 - 2 * (j + 0.5) / @height) * scale
       @dir_x, @dir_y, @dir_z = normalize(x, y, -1)
 
-      intersects,t,u,v = rayTriangleIntersect(t,u,v)
+      intersects,light,t,u,v = rayTriangleIntersect(t,u,v)
       if intersects
         red = u * cols[0].r + v * cols[1].r + (1 - u - v) * cols[2].r
         green = u * cols[0].g + v * cols[1].g + (1 - u - v) * cols[2].g
-        blue = u * cols[0].b + v * cols[1].b + (1 - u - v) * cols[2].b
+        #blue = u * cols[0].b + v * cols[1].b + (1 - u - v) * cols[2].b
+
+        # do something like uv mapping
+        # just totally hacky
         red *= 2
         red = 1 - red
         green *= 2
@@ -98,8 +104,11 @@ def draw args
         xx = (red * LOGO_WIDTH).to_i
         yy = (green * LOGO_HEIGHT).to_i
         _col = (LOGO[xx + yy * LOGO_WIDTH]) >> 6
-        _col = (_col > 0 && _col < 255) ? 0xFF0000FF : 0x00FFFFFF
-        #logo_color = LOGO
+
+        # add light
+        light_color = (255 * (light/180).abs).to_i
+
+        _col = (_col > 0 && _col < 255) ? (0xFF000000 + light_color) : 0x00FFFFFF
         @framebuffer[pix] = _col #0xFF000000 + ((red*255).to_i << 16) + ((green*255).to_i << 8) + (blue*255).to_i
       end
 
@@ -136,13 +145,15 @@ def rayTriangleIntersect(t, u, v)
   n_x, n_y, n_z = cross_product(v0v1_x,v0v1_y,v0v1_z,v0v2_x,v0v2_y,v0v2_z)
   denom = dot(n_x, n_y, n_z, n_x, n_y, n_z)
 
+  light = dot(n_x, n_y, n_z, @light_x, @light_y, @light_z)
+
   # Step 1: finding P
 
   # check if ray and plane are parallel ?
   ndotRayDirection = dot(n_x, n_y, n_z, @dir_x, @dir_y, @dir_z)
 
     if ndotRayDirection.abs < 1e-8 # almost 0
-        return [false,t , u, v] # they are parallel so they don't intersect !
+        return [false,0,t , u, v] # they are parallel so they don't intersect !
     end
 
   # compute d parameter using equation 2
@@ -155,7 +166,7 @@ def rayTriangleIntersect(t, u, v)
 
   # check if the triangle is in behind the ray
   if t < 0
-    return [false, t , u, v] # the triangle is behind
+    return [false,0, t , u, v] # the triangle is behind
   end
 
   # compute the intersection point using equation 1
@@ -175,7 +186,7 @@ def rayTriangleIntersect(t, u, v)
   vp0_z = p_z - @v0_z
   c_x, c_y, c_z = cross_product(edge0_x, edge0_y, edge0_z, vp0_x, vp0_y, vp0_z)
   if dot(n_x,n_y,n_z,c_x,c_y,c_z) < 0
-    return [false,t , u, v] # P is on the right side
+    return [false,0,t , u, v] # P is on the right side
   end
 
   # edge 1
@@ -188,7 +199,7 @@ def rayTriangleIntersect(t, u, v)
   c_x, c_y, c_z = cross_product(edge1_x,edge1_y,edge1_z,vp1_x,vp1_y,vp1_z)
   u = dot(n_x,n_y,n_z,c_x,c_y,c_z)
   if u < 0
-    return [false,t , u, v] # P is on the right side
+    return [false,0,t , u, v] # P is on the right side
   end
 
   # edge 2
@@ -201,11 +212,11 @@ def rayTriangleIntersect(t, u, v)
   c_x, c_y, c_z = cross_product(edge2_x,edge2_y,edge2_z,vp2_x,vp2_y,vp2_z)
   v = dot(n_x,n_y,n_z,c_x,c_y,c_z)
   if v < 0
-    return [false, t , u, v] # P is on the right side;
+    return [false,0, t , u, v] # P is on the right side;
   end
 
   u /= denom
   v /= denom
 
-  return [true, t , u, v] # this ray hits the triangle
+  return [true,light, t , u, v] # this ray hits the triangle
 end
